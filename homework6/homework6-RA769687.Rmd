@@ -1,0 +1,233 @@
+---
+title: "homework 6"
+author: "Italo Carvalho Vianelli Ribeiro"
+date: "09/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Homework 6
+
+RA 769687
+
+
+```{r}
+library(dplyr)     
+library(tidyr)     
+library(ggplot2)   
+library(readxl)    
+library(patchwork)  
+library(scales)     
+library(gridExtra)
+```
+
+```{r}
+
+corona = read_excel("HIST_PAINEL_COVIDBR_15jun2020.xlsx", 
+                                            col_types = c("text",    # Regiao
+                                                          "text",    # Estado
+                                                          "text",    # Municipio
+                                                          "text",    # coduf
+                                                          "numeric", # codmun
+                                                          "numeric", # codRegiaoSaude
+                                                          "text",    # nomeRegiaoSaude
+                                                          "date",    # data
+                                                          "numeric", # semanaEpi
+                                                          "text",    # populacaoTCU2019
+                                                          "numeric", # casosAcumulado
+                                                          "numeric", # casosNovos
+                                                          "numeric", # obitosAcumulado
+                                                          "numeric", # obitosNovos
+                                                          "numeric", # Recuperadosnovos
+                                                          "numeric"  # emAcompanhamentoNovos
+                                                          ))
+
+head(corona)
+```
+
+
+Primeiro eu quis fazer a analise de casos acumulados por região do Brasil. E pude analisar que até junho, sudeste e o nordeste são os estados que possuem o maior numeros de casos de COVID-19 acumulados até então
+
+```{r}
+coronaregiao=filter(corona, !is.na(corona$estado)& is.na(corona$municipio))
+ggplot(coronaregiao, aes(data, casosAcumulado)) +
+  geom_line(color="blue") +
+  facet_wrap(vars(regiao), ncol = 4, scales = "free_y")+
+  labs(
+    title = "COVID-19 - Regiões",
+    subtitle = "(Casos Acumulados por Região)"
+    )
+```
+
+ Esses dados de casos se refletem no número de óbitos acumulados por cada região com as regiões sudeste e nordeste com os maiores números de óbitos
+
+```{r}
+coronaregiao=filter(corona, !is.na(corona$estado)& is.na(corona$municipio))
+ggplot(coronaregiao, aes(data, obitosAcumulado)) +
+  geom_line(color="blue") +
+  facet_wrap(vars(regiao), ncol = 4, scales = "free_y")+
+  labs(
+    title = "COVID-19 - Regiões",
+    subtitle = "(Óbitos Acumulados por Região)"
+    )
+```
+
+
+
+
+Após analisar as regiões resolvi analisar os novos casos de COVID-19 no município que eu moro que é Campinas - SP, e pude perceber que de março a junho, os casos vem aumentando 
+
+```{r}
+municípios=municipios <- corona %>%
+  filter(!is.na(estado), !is.na(municipio))
+Campinas=municipios <- corona %>%
+  filter(!is.na(estado), !is.na(municipio), municipio=="Campinas")
+newcasescps=ggplot(Campinas, aes(x = data, y = casosNovos)) +
+  geom_line(color="blue")
+newcasescps + labs(title="Casos novos de COVID-19 em Campinas")
+
+```
+
+sequencialmente, avaliei os óbitos tanto novos, quantos acumulados em Campinas-SP, podendo analisar o número de óbitos junto com o número de casos novos vem aumentando cada vez mais, tendo picos cada vez maiores.
+
+
+```{r}
+newdeathscps=ggplot(Campinas, aes(data, obitosNovos)) +
+  geom_line(color="red") + labs(title="Óbitos Novos de COVID-19 em Campinas")
+alldeathscps=ggplot(Campinas, aes(data, obitosAcumulado)) +
+  geom_line(color="red") + labs(title="Óbitos acumulados de COVID-19 em Campinas")
+grid.arrange(newdeathscps,alldeathscps, ncol=1)
+```
+
+Após isso, resolvi analisar os casos e óbitos no estado de São Paulo(SP) de uma maneira geral, e pode-se observar que o número de casos cresce de uma maneira semelhante ao número de óbitos no estado
+
+
+```{r}
+estado_SP=corona %>%
+  filter(!is.na(estado), is.na(codmun), estado=="SP")
+
+newcasesSP=ggplot(estado_SP, aes(x = data, y = casosNovos)) +
+  geom_line(color="blue") + labs(title = "Novos casos no estado de SP")
+newdeathsSP=ggplot(estado_SP, aes(data, obitosNovos)) +
+  geom_line(color="red")  + labs(title = "Novos óbitos no estado de SP")
+deathsAcSP=ggplot(estado_SP, aes(data, obitosAcumulado)) +
+  geom_line(color="red")  + labs(title = "Óbitos acumulados no estado de SP")
+acumuladoSP=ggplot(estado_SP, aes(data, casosAcumulado)) +
+  geom_line(color="blue") + labs(title = "Casos acumulados no estado de SP")
+
+newcasesSP + acumuladoSP + newdeathsSP + deathsAcSP
+```
+
+
+Após a análise do estado de São Paulo, fiquei curioso em saber como está o crescimento dos casos e óbitos nos estados vizinhos de São Paulo, no caso Minas Gerais(MG) e Rio de Janeiro(RJ). E foi visto que mesmo com o Rio de Janeiro ter muitos mais casos que Minas Gerais, ambos estão com uma curva de crescimento parecida no acumulo de casos e óbitos
+
+```{r}
+estado_MG=corona %>%
+  filter(!is.na(estado), is.na(codmun), estado=="MG")
+estado_RJ=corona %>%
+  filter(!is.na(estado), is.na(codmun), estado=="RJ")
+
+deathsAcMG=ggplot(estado_MG, aes(data, obitosAcumulado)) +
+  geom_line(color="red")  + labs(title = "Óbitos acumulados - estado MG")
+acumuladoMG=ggplot(estado_MG, aes(data, casosAcumulado)) +
+  geom_line(color="blue") + labs(title = "Casos acumulados - estado MG")
+deathsAcRJ=ggplot(estado_RJ, aes(data, obitosAcumulado)) +
+  geom_line(color="red")  + labs(title = "Óbitos acumulados - estado RJ")
+acumuladoRJ=ggplot(estado_RJ, aes(data, casosAcumulado)) +
+  geom_line(color="blue") + labs(title = "Casos acumulados - estado RJ")
+
+acumuladoMG + acumuladoRJ + deathsAcMG + deathsAcRJ 
+
+```
+
+
+E analisando os novos casos em ambos estados
+
+```{r}
+newcasesMG=ggplot(estado_MG, aes(x = data, y = casosNovos)) +
+  geom_line(color="blue") + labs(title = "Novos casos no estado de MG")
+newdeathsMG=ggplot(estado_MG, aes(data, obitosNovos)) +
+  geom_line(color="red")  + labs(title = "Novos óbitos no estado de MG")
+newcasesRJ=ggplot(estado_RJ, aes(x = data, y = casosNovos)) +
+  geom_line(color="blue") + labs(title = "Novos casos no estado de RJ")
+newdeathsRJ=ggplot(estado_RJ, aes(data, obitosNovos)) +
+  geom_line(color="red")  + labs(title = "Novos óbitos no estado de RJ")
+
+newcasesMG + newcasesRJ + newdeathsMG + newdeathsRJ
+```
+
+
+Após fazer a analise de estados, resolvi verificar quais são as cidades mais afetadas pelo COVID-19 do estado que moro (São Paulo). E pode notar que são cidades próximas da capital, mas mesmo assim a capital está muito mais afetada comparada as suas cidades vizinhas que também estão sendo mais afetadas nessa pandemia
+
+```{r}
+municipios_SP = municipios <- corona %>%
+  filter(!is.na(estado), !is.na(municipio), estado == "SP")
+
+top5cidadesSP <- municipios_SP %>%
+  select(municipio, casosNovos) %>%
+  group_by(municipio) %>%
+  summarise(total_casos = sum(casosNovos)) %>%
+  arrange(desc(total_casos))
+
+top5cidadesSP <- top_n(top5cidadesSP, 5)
+
+ggplot(top5cidadesSP, mapping = aes(x = municipio, y = total_casos))+
+  geom_bar(stat = "identity", aes(fill = municipio))+
+  labs(
+    title = "Cidades mais afetadas do estado de São Paulo",
+    subtitle = "TOP 5",
+    x = "Cidade",
+    y = "Casos",
+    tag = "        "
+  )+
+  geom_text(aes(label = total_casos, vjust = -0.3) )+
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )+  scale_fill_discrete(name = "Cidade")
+```
+
+Resolvi também analisar quais são as cidades do Brasil que tem os maiores número de óbitos acumulados. E podemos reparar que algumas das capitais dos estados das regiões sudeste, nordeste e norte compoe as 5 cidades com mais óbitos no país, e isso é reflexo da analíse feita anteriormente no crescimento de óbitos nas regiões
+
+```{r}
+municipios = municipios <- corona %>%
+  filter(!is.na(estado), !is.na(municipio))
+
+top5mortes <- municipios %>%
+  select(municipio, obitosAcumulado) %>%
+  group_by(municipio) %>%
+  summarise(totalmortes = sum(obitosAcumulado)) %>%
+  arrange(desc(totalmortes))
+
+top5mortes <- top_n(top5mortes, 5)
+
+ggplot(top5mortes, mapping = aes(x = municipio, y = totalmortes))+
+  geom_bar(stat = "identity", aes(fill = municipio))+
+  labs(
+    title = "Cidades mais afetadas do Brasil",
+    subtitle = "TOP 5",
+    x = "Cidade",
+    y = "Casos",
+    tag = "        "
+  )+
+  geom_text(aes(label = totalmortes, vjust = -0.3) )+
+  theme(
+    plot.title = element_text(hjust = 0.5, face = "bold"),
+    plot.subtitle = element_text(hjust = 0.5)
+  )+  scale_fill_discrete(name = "Cidade")
+```
+
+E por fim, a análise de número de óbitos em São Carlos, a cidade onde localiza o campus da UFSCar que estudo
+
+
+```{r}
+sanca = municipiosSP <- corona %>%
+  filter(!is.na(estado), !is.na(municipio), municipio=="São Carlos") 
+alldeathssanca=ggplot(sanca, aes(data, obitosAcumulado)) +
+  geom_line(color="red") + labs(title="Óbitos acumulados de COVID-19 em São Carlos")
+alldeathssanca
+```
+

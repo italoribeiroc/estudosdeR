@@ -1,0 +1,106 @@
+---
+title: "Homework 4"
+author: "Italo Carvalho Vianelli Ribeiro"
+date: "17/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+RA: 769687
+
+
+```{r}
+#install.packages('nycflights13')
+library(nycflights13)
+library(dplyr)
+nycflights13::flights
+```
+
+
+Exercício 1
+
+a)
+
+```{r}
+filter(flights, arr_delay >= 2)
+```
+
+b)
+
+```{r}
+filter(flights, dest == 'IAH'| dest == 'HOU' )
+```
+
+c)
+
+```{r}
+filter(flights, carrier == 'UA' | carrier == 'AA' | carrier =='DL')
+```
+
+d)
+
+```{r}
+filter(flights, month >= 7 & month <= 9)
+```
+
+e)
+
+```{r}
+filter(flights, dep_delay <= 0 & arr_delay > 2)
+```
+
+f)
+
+```{r}
+filter(flights, dep_time > 0 & dep_time <= 600)
+```
+
+
+
+Exercício 2
+
+
+```{r}
+arrange(flights, desc(dep_delay), desc(arr_delay))
+```
+
+Exercício 3
+
+```{r}
+data = mutate(flights, velocidade = distance / air_time * 60)
+arrange(data, desc(velocidade))
+```
+
+
+Exercício 4
+
+
+Se você inserir o nome de uma variável varias vezes dentro do select, será selecionado a variável apenas na primeira vez que for escrita, e as repetições serão ignoradas
+
+```{r}
+select(flights, year,dep_time, month, day, dep_time, dep_time, dep_time)
+```
+
+
+
+Exercício 5
+
+```{r}
+?min_rank
+arrange(flights,desc(dep_delay))
+datarank = mutate(flights, minrank_depdelay = min_rank(select(flights, dep_delay)))
+top_n(datarank, 10)
+```
+
+
+Exercício 6
+
+```{r}
+flights_timein.air = flights[!is.na(flights$air_time),]
+timein_air = flights%>%mutate(media_airtime = mean(flights_timein.air$air_time))
+timein_air%>%select(flight, media_airtime)
+```
+

@@ -1,0 +1,488 @@
+---
+title: "Homework 8"
+author: "Italo Carvalho Vianelli Ribeiro"
+date: "15/07/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Homework 8 - RA 769687
+
+```{r}
+#install.packages("sidrar")
+library(sidrar)
+library(ggplot2)
+library(scales)
+library(dynlm)
+library(dplyr)
+library(gridExtra)
+library(ggrepel)
+library(tidyverse) 
+library(readxl)
+library(lubridate)
+library(scales)
+```
+
+Exercício 1
+
+a)
+```{r}
+#Sem ajuste sazonal
+tabela = get_sidra(api='/t/1620/n1/all/v/all/p/all/c11255/90687,90691,90696,90707,93404,93405,93406,93407,93408/d/v583%202')
+#com ajuste sazonal
+tabela_sa = get_sidra(api='/t/1621/n1/all/v/all/p/all/c11255/90687,90691,90696,90707,93404,93405,93406,93407,93408/d/v584%202')
+
+series = c(90687,90691,90696,90707,93404,93405,93406,93407,93408)
+names = c('Agro', 'Ind', 'Serv', 'PIB',
+          'Consumo', 'Governo', 'FBCF',
+          'Exportação', 'Importação')
+```
+
+b)
+```{r}
+pib = matrix(NA, ncol=length(series), 
+             nrow=nrow(tabela)/length(series))
+for(i in 1:length(series)){
+  pib[,i] = tabela$Valor[tabela$
+                           `Setores e subsetores (Código)`
+                         ==series[i]] 
+  pib = ts(pib, start=c(1996,01), freq=4)
+  colnames(pib) = names
+}
+
+tail(pib)
+
+# para dados sem ajuste sazonal
+tabela = get_sidra(api='/t/1620/n1/all/v/all/p/all/c11255/90687,90691,90696,90707,93404,93405,93406,93407,93408/d/v583%202') %>%
+  mutate(date = as.yearqtr(`Trimestre (Código)`, format='%Y%q')) %>%
+  select(date, `Setores e subsetores`, Valor) %>%
+  spread(`Setores e subsetores`, Valor) %>%
+  rename(`Consumo do Governo` = `Despesa de consumo da administração pública`) %>%
+  as_tibble()
+# para dados com ajuste sazonal
+tabela_sa = get_sidra(api='/t/1621/n1/all/v/all/p/all/c11255/90687,90691,90696,90707,93404,93405,93406,93407,93408/d/v584%202') %>%
+    mutate(date = as.yearqtr(`Trimestre (Código)`, format='%Y%q')) %>%
+    select(date, `Setores e subsetores`, Valor) %>%
+    spread(`Setores e subsetores`, Valor) %>%
+    rename(`Consumo do Governo` = `Despesa de consumo da administração pública`) %>%
+    as_tibble()
+```
+
+
+c)
+```{r}
+agro <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `Agropecuária - total`))
+cons <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `Consumo do Governo`))
+despesa <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `Despesa de consumo das famílias`))
+export <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `Exportação de bens e serviços`))
+formacao <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `Formação bruta de capital fixo`))
+import <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `Importação de bens e serviços (-)`))
+ind <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `Indústria - total`))
+merc <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `PIB a preços de mercado`))
+servtot <- ggplot(tabela) + geom_line(aes(x = as.Date(date), y = `Serviços - total`))
+
+grid.arrange(agro, cons, despesa, export, formacao, import, ind, merc, servtot, ncol=4)
+```
+
+d)
+```{r}
+agro_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `Agropecuária - total`))
+cons_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `Consumo do Governo`))
+despesa_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `Despesa de consumo das famílias`))
+export_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `Exportação de bens e serviços`))
+formacao_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `Formação bruta de capital fixo`))
+import_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `Importação de bens e serviços (-)`))
+ind_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `Indústria - total`))
+merc_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `PIB a preços de mercado`))
+servtot_sa <- ggplot(tabela_sa) + geom_line(aes(x = as.Date(date), y = `Serviços - total`))
+
+grid.arrange(agro_sa, cons_sa, despesa_sa, export_sa, formacao_sa, import_sa, ind_sa, merc_sa, servtot_sa, ncol=4)
+```
+
+e)
+```{r}
+ggplot() +
+geom_line(data = tabela_sa, mapping = aes(x = date, y = `PIB a preços de mercado`, color = "sem ajuste")) +
+geom_line(data = tabela, mapping = aes(x = date, y = `PIB a preços de mercado`, color = "com ajuste"))+
+  labs(title = ' Série do PIB em nível e série dessasonalizada')
+```
+
+f)
+```{r}
+  tabela = get_sidra(api='/t/1620/n1/all/v/all/p/all/c11255/90687,90691,90696,90707,93404,93405,93406,93407,93408/d/v583%202') %>%
+    mutate(date = as.yearqtr(`Trimestre (Código)`, format='%Y%q')) %>%
+    select(date, `Setores e subsetores`, Valor) %>%
+    spread(`Setores e subsetores`, Valor) %>%
+    rename(`Consumo do Governo` = `Despesa de consumo da administração pública`) %>%
+    as_tibble()
+  
+  variavel = mutate(tabela, `taxa` = (`Formação bruta de capital fixo`) / (`PIB a preços de mercado`))
+  
+  p = c(variavel$`taxa`[2], 
+        variavel$`taxa`[3],
+        variavel$`taxa`[7],
+        variavel$`taxa`[12],
+        variavel$`taxa`[14],
+        variavel$`taxa`[22],
+        variavel$`taxa`[23],
+        variavel$`taxa`[29],
+        variavel$`taxa`[31],
+        variavel$`taxa`[35],
+        variavel$`taxa`[45],
+        variavel$`taxa`[47],
+        variavel$`taxa`[51],
+        variavel$`taxa`[53],
+        variavel$`taxa`[55],
+        variavel$`taxa`[56],
+        variavel$`taxa`[59],
+        variavel$`taxa`[63],
+        variavel$`taxa`[67],
+        variavel$`taxa`[72],
+        variavel$`taxa`[74],
+        variavel$`taxa`[79],
+        variavel$`taxa`[82],
+        variavel$`taxa`[85],
+        variavel$`taxa`[88],
+        variavel$`taxa`[92],
+        variavel$`taxa`[94])
+  
+  
+  f1 <- ggplot(variavel, aes(x = as.Date(date), y = `taxa`)) +
+        geom_line() +
+        geom_point(data = variavel[variavel$`taxa` %in% p,], shape = 21, fill = "white") +
+        geom_text(data = variavel[variavel$`taxa` %in% p,], aes(label = round(p, 2)))
+  
+    f2 <- f1 + geom_text_repel(data = variavel[variavel$`taxa` %in% p,], aes(label = round(p, 2))) 
+  
+    f2
+```
+
+
+Exercício 2
+
+Preparação de Gráficos que serão utilizados
+
+```{r}
+
+url = 'http://pdet.mte.gov.br/images/Seguro-Desemprego/Segunda%20Quinzena%20de%20Maio/3-%20S%C3%A9rie%20Hist%C3%B3rica%20do%20Seguro-Desemprego%20-%202000%20a%202020%20-%20mensal.xlsx'
+download.file(url, destfile = 'seguro.xlsx', mode='wb')
+data = read_excel('seguro.xlsx', sheet="Tabela 1", skip=5) %>%
+drop_na()
+dates = parse_date_time(colnames(data[-1]),
+orders='%Y/%m')
+names = data$...1
+data = t(data[,-1])
+row.names(data) = NULL
+colnames(data) = names
+
+data =
+data %>%
+as_tibble() %>%
+mutate(DATES = dates) %>%
+select(DATES, everything())
+
+grafAlagoas <- ggplot(data, aes(x=DATES, y=ALAGOAS))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Alagoas',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafAcre <- ggplot(data, aes(x=DATES, y=ACRE))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: ACRE',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafAmazonas <- ggplot(data, aes(x=DATES, y=AMAZONAS))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: AMAZONAS',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafAcre <- ggplot(data, aes(x=DATES, y=ACRE))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: ACRE',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafAmapa <- ggplot(data, aes(x=DATES, y=AMAPA))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Amapa',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafBahia <- ggplot(data, aes(x=DATES, y=BAHIA))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Bahia',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafCeara <- ggplot(data, aes(x=DATES, y=CEARA))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Ceara',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafDF <- ggplot(data, aes(x=DATES, y=`DISTRITO FEDERAL`))+ 
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Distrito Federal',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafESantos <- ggplot(data, aes(x=DATES, y=`ESPIRITO SANTO`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Espirito Santo',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafGoias <- ggplot(data, aes(x=DATES, y=GOIAS))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Goiás',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafMaranhao <- ggplot(data, aes(x=DATES, y=MARANHAO))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Maranhão',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafMT <- ggplot(data, aes(x=DATES, y=`MATO GROSSO`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Mato Grosso',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafMTS <- ggplot(data, aes(x=DATES, y=`MATO GROSSO DO SUL`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Mato Grosso do Sul',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafMinas <- ggplot(data, aes(x=DATES, y=`MINAS GERAIS`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Minas Gerais',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafPara <- ggplot(data, aes(x=DATES, y=PARA))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Para',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafParaiba <- ggplot(data, aes(x=DATES, y=PARAIBA))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Paraíba',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafPernambuco <- ggplot(data, aes(x=DATES, y=PERNAMBUCO))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Pernambuco',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafParana <- ggplot(data, aes(x=DATES, y=PARANA))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Paraná',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafPiaui <- ggplot(data, aes(x=DATES, y=PIAUI))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Piauí',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafRN <- ggplot(data, aes(x=DATES, y=`RIO GRANDE DO NORTE`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Rio Grande do Norte',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafRJ <- ggplot(data, aes(x=DATES, y=`RIO DE JANEIRO`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Rio de Janeiro',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafRS <- ggplot(data, aes(x=DATES, y=`RIO GRANDE DO SUL`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Rio Grande do Sul',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafRondonia <- ggplot(data, aes(x=DATES, y=`RONDONIA`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Rondônia',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafRoraima <- ggplot(data, aes(x=DATES, y=`RORAIMA`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Roraima',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafSC <- ggplot(data, aes(x=DATES, y=`SANTA CATARINA`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Santa Catarina',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafSP <- ggplot(data, aes(x=DATES, y=`SAO PAULO`))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: São Paulo',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafSergipe <- ggplot(data, aes(x=DATES, y=SERGIPE))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Sergipe',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+grafTocantins <- ggplot(data, aes(x=DATES, y=TOCANTINS))+
+  geom_line(size=.8, colour='darkblue')+
+   labs(title='Pedidos de seguro-desemprego: Tocantins',
+ subtitle='Série histórica', xlab = "Período", ylab="Pedidos (mil)",
+ caption='Fonte: Ministério do Trabalho')
+
+head(data)
+
+
+```
+
+
+Norte 
+```{r}
+grid.arrange(grafAcre, grafAmapa, grafAmazonas, grafPara, grafRoraima, grafTocantins, grafRondonia, ncol=3)
+```
+
+Nordeste 
+
+```{r}
+grid.arrange(grafBahia, grafRN, grafAlagoas, grafCeara, grafMaranhao, grafParaiba, grafPernambuco, grafPiaui, grafSergipe, ncol=3)
+```
+
+Centro-Oeste 
+
+```{r}
+grid.arrange(grafGoias, grafDF, grafMT, grafMTS, ncol=2)
+```
+
+Sudeste 
+
+```{r}
+grid.arrange(grafSP, grafESantos, grafMinas, grafRJ, ncol=2)
+```
+
+Sul
+
+```{r}
+grid.arrange(grafParana, grafRS, grafSC, ncol=2)
+```
+
+
+Exercício 3
+
+
+a)
+```{r}
+devtools::install_github("wilsonfreitas/rbcb")
+library(rbcb)
+
+dados = get_annual_market_expectations(c('PIB Total', 'IPCA',
+                                        'Taxa de câmbio',
+                                        'Meta para taxa over-selic'),
+                                      start_date = '2012-01-01')
+
+ipca = dados %>% filter(indic == 'IPCA' & reference_year == 2021, base == "0")
+pibe = dados %>% filter(indic == 'PIB Total' & reference_year == 2021)
+cambio = dados %>% filter(indic == 'Taxa de cÃ¢mbio' & reference_year == 2021 & indic_detail == 'MÃ©dia do ano')
+selic = dados %>% filter(indic == 'Meta para taxa over-selic' & reference_year == 2021 & indic_detail == 'MÃ©dia do ano')
+```
+ b)
+```{r}
+grafipca=ggplot(ipca, aes(date, median))+
+geom_line(color="red")+
+labs(x='data', y='Expectativa do IPCA',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafpibe=ggplot(pibe, aes(date, median))+
+geom_line(color="red")+
+labs(x='data', y='Expectativa do PIB',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafcambio=ggplot(cambio, aes(date, median))+
+geom_line(color="red")+
+labs(x='data', y='Expectativa do câmbio',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafselic = ggplot(selic, aes(date, median))+
+geom_line(color="red")+
+labs(x='data', y='Expectativa da Selic',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grid.arrange(grafipca, grafpibe, grafcambio, grafselic, ncol=2)
+```
+ 
+ 
+ c)
+ 
+```{r}
+grafipca=ggplot(ipca, aes(date, sd))+
+geom_line(color="green")+
+labs(x='data', y='Expectativa do IPCA',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafpibe=ggplot(pibe, aes(date, sd))+
+geom_line(color="green")+
+labs(x='data', y='Expectativa do PIB',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafcambio=ggplot(cambio, aes(date, sd))+
+geom_line(color="green")+
+labs(x='data', y='Expectativa do câmbio',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafselic = ggplot(selic, aes(date, sd))+
+geom_line(color="green")+
+labs(x='data', y='Expectativa da Selic',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grid.arrange(grafipca, grafpibe, grafcambio, grafselic, ncol=2)
+```
+ 
+ 
+ d)
+ 
+```{r}
+grafipca=ggplot(ipca, aes(date, mean))+
+geom_line(color="blue")+
+labs(x='data', y='Expectativa do IPCA',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafpibe=ggplot(pibe, aes(date, mean))+
+geom_line(color="blue")+
+labs(x='data', y='Expectativa do PIB',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafcambio=ggplot(cambio, aes(date, mean))+
+geom_line(color="blue")+
+labs(x='data', y='Expectativa do câmbio',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grafselic = ggplot(selic, aes(date, mean))+
+geom_line(color="blue")+
+labs(x='data', y='Expectativa da Selic',
+caption='Fonte: Boletim FOCUS - Banco Central')
+
+grid.arrange(grafipca, grafpibe, grafcambio, grafselic, ncol=2)
+```
+ 
+ 

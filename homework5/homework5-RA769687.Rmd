@@ -1,0 +1,103 @@
+---
+title: "homework5-RA769687"
+author: "Italo Carvalho Vianelli Ribeiro"
+date: "23/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+RA: 769687
+
+
+```{r}
+#install.packages("gtrendsR")
+#install.packages("patchwork")
+library(gtrendsR)
+library(ggplot2)
+library(dplyr)
+library(patchwork)
+
+```
+
+Exercício 1
+
+No exercício de hoje eu resolvi tanto pesquisar como está a procura de empreendedores passarem a digitalizar para conseguirem realizar vendas de seus negócios durante essa epóca de corona vírus.
+
+
+Primeiro fiquei curioso em saber o quanto a palavra 'e-commerce' foi pesquisada ao longo do tempo no Brasil, e então descobri que a palavra foi muito buscada durante o ínicio do século 21 onde as pessoas passaram a ter computadores domésticos e a utilização da tecnologia se tornou mais popular
+
+```{r}
+ecommerce <- gtrends(c("e-commerce"), geo = c("BR"), time = "all")
+plot(ecommerce)
+```
+
+
+Depois fiz a análise nos últimos meses, e pude perceber que, mesmo oscilando, a procura por e-commerce teve um aumento nos últimos meses com a crise pandêmica
+
+```{r}
+ecommerce2 <- gtrends(c("e-commerce"), geo = c("BR"), time = "2020-01-01 2020-06-23")
+plot(ecommerce2)
+```
+
+
+Após isso fiz a análise de pesquisa dos principais aplicativos de entrega: ifood, rappi, delivery much e uber eats. Pode se perceber que a partir do mês de março a busca por esses serviços aumentaram principalmente o rappi que é um aplicativo de entrega de todo tipo de produto
+
+
+```{r}
+
+plot_trend<-function(keyword_string){
+data<-gtrends(c(keyword_string), time= "2020-01-01 2020-06-14", geo = "BR")
+time_trend<-data$interest_over_time %>%
+  mutate(hits=ifelse(hits=="<1",0.5,hits),
+         date=as.Date(date),
+         keyword=factor(keyword, levels = keyword_string))
+plot<-ggplot(data=time_trend, aes(x=date, y=as.numeric(hits), colour=keyword)) +
+  geom_line() +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-10"))) +
+  theme_bw() +
+  scale_y_continuous(breaks = NULL) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        legend.text=element_text(size=10),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank())
+return(plot)
+}
+
+ifood_plot<-plot_trend(keyword_string = c( "ifood"))
+rappi_plot<-plot_trend(keyword_string = c("rappi"))
+deliverymuch_plot<-plot_trend(keyword_string = c("delivery much"))
+ubereats_plot<-plot_trend(keyword_string = c("uber eats"))
+
+(ifood_plot + rappi_plot) / (deliverymuch_plot + ubereats_plot)
+```
+
+
+Sequencialmente fiz um gráfico comparando a pesquisa dos termos "comércio" e "comércio digital". E mesmo a pesquisa por comércio digital sendo constante pode-se notar que com a pandêmia do covid-19  busca por criar um comércio teve um aumento bem significativo.
+
+```{r}
+comerciodigital<-plot_trend(keyword_string = c( "comércio digital", "comércio"))
+comerciodigital
+```
+
+
+Também realizei um gráfico para poder analizar a procura de criação de site também vem aumentando, mostrando que a procura por digitalizar nesse período de pandemia está aumentando
+
+
+```{r}
+site<-plot_trend(keyword_string = c( "criar site"))+geom_smooth(se = FALSE, method = "lm")
+site
+```
+
+
+Por fim realizei um gráfico em relação a procura de "marketing digital", e posso concluir que com a crise pandemica as pessoas realmente estão indo atás de digitalizar seus negócios, empreender, para sobreviver nesses tempos em que a população precisa estar de quarentena
+
+```{r}
+mkt<-plot_trend(keyword_string = c( "marketing digital"))
+mkt
+```
+

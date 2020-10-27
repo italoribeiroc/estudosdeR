@@ -1,0 +1,158 @@
+---
+title: "homework2-RA769687"
+author: "Italo Carvalho Vianelli Ribeiro"
+date: "12/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+RA: 769687
+
+```{r}
+library(ggplot2)
+data(USArrests)
+mydata = USArrests
+```
+
+
+Exercício 1
+
+```{r}
+ggplot(data = USArrests) +
+geom_histogram(mapping = aes(x = Murder), fill ='blue', color='black') +
+labs(x = 'Assassinatos para cada 100mil habitantes',
+y = 'Frequencia',
+title = 'Histograma assasinatos(murder)')
+```
+
+```{r}
+ggplot(data = USArrests) +
+geom_boxplot(mapping = aes(x = 1, y = Murder), color = 'black', fill = 'blue')+
+labs(y = 'Assassinatos para cada 100mil habitantes',
+title = 'Box-plot assasinatos(murder)')
+```
+
+```{r}
+ggplot(data = USArrests) +
+geom_histogram(mapping = aes(x = Assault), fill ='red', color='black') +
+labs(x = 'Assaltos para cada 100mil habitantes',
+y = 'Frequencia',
+title = 'Histograma Assaltos(Assault)')
+```
+```{r}
+ggplot(data = USArrests) +
+geom_boxplot(mapping = aes(x = 1, y = Assault), color = 'black', fill = 'red')+
+labs(y = 'Assaltos para cada 100mil habitantes',
+x = 'Frequencia',
+title = 'Box-plot assaltos (Assault)')
+```
+```{r}
+ggplot(data = USArrests) +
+geom_histogram(mapping = aes(x = UrbanPop), fill ='pink', color='black') +
+labs(x = 'Populção urbana',
+title = 'Histograma População Urbana(UrbanPop)')
+```
+
+
+```{r}
+ggplot(data = USArrests) +
+geom_boxplot(mapping = aes(x = 1, y = UrbanPop), color = 'black', fill = 'pink')+
+labs(y = 'Populção urbana',
+title = 'Box-plot População Urbana(UrbanPop)')
+```
+
+```{r}
+ggplot(data = USArrests) +
+geom_histogram(mapping = aes(x = Rape), fill ='orange', color='black') +
+labs(x = 'Estupro para cada 100mil habitantes',
+y = 'Frequencia',
+title = 'Histograma Estrupo(Rape)')
+```
+
+```{r}
+ggplot(data = USArrests) +
+geom_boxplot(mapping = aes(x = 1, y = Rape), color = 'black', fill = 'orange')+
+labs(y = 'Estupro para cada 100mil habitantes',
+x = 'Frequencia',
+title = 'Box-plot Estupro(Rape)')
+```
+
+
+Exercicío 2
+
+Resolvi fazer um gráfico a fim de verificar como o nível de assaltos se relaciona com o tamanho da população urbana. Ademais obti a linha relacionando as duas variavéis, e por ela ser crescente pude concluir que de acordo quanto mais população urbana tem o estado nos Estado Unidos, geralmente maiores são os índices de assalto.
+
+```{r}
+ggplot(mydata, aes(x = UrbanPop, y = Assault)) +
+geom_point(color='red', size=4) +
+labs(y = "Assaltos",
+x = "População Urbana",
+title = "Relação entre assaltos e População Urbana")+
+geom_smooth( method = "lm")
+
+```
+
+
+Exercício 3
+
+O conjunto de dados ToothGrowth contém o resultado de um experimento que estuda o efeito da vitamina C no crescimento dentário em 60 porquinhos da Índia. Cada animal recebeu um dos três níveis de dose de vitamina C (0,5, 1 e 2 mg / dia) por um dos dois métodos de entrega (suco de laranja ou ácido ascórbico (uma forma de vitamina C e codificada como VC).
+
+```{r}
+data(ToothGrowth)
+myData2 =  ToothGrowth
+head(myData2)
+```
+
+```{r}
+ggplot(myData2) +
+geom_histogram(mapping = aes(x = len), bins = 60, fill ='blue', color='black') +
+labs(x = 'comprimento do dente',
+title = 'Histograma comprimento do dente de todos porcos testados')
+```
+
+Verificação da quantidade de doses utilizadas nos testes
+
+```{r}
+ggplot(data = myData2) +
+geom_density(mapping = aes(x = dose), kernel = 'gaussian')
+```
+
+
+Nesse gráfico é possível visualizar que foram obtidos mais resultados de comprimento de dente entre 20 e 30.
+
+```{r}
+ggplot(data = myData2) +
+geom_violin(mapping = aes(x = 1, y = len))
+```
+
+
+Nesse gráfico conseguimos ver que com os testes obtidos, é póssivel ter valores mais próximos da realidade do quanto a vitamina C ingerida através do suco de laranja, ao invés da própria Vitamina C, pois apresentou resultados mais variados 
+
+```{r}
+ggplot(myData2) +
+geom_point(aes(x = supp, y = len, color = factor(dose)),
+size = 3) +
+scale_color_manual("Dose (mg/dia):",
+values = c("red", "blue", "green"),
+labels = c("0.5", "1", "2")) +
+labs(title = 'Relação comprimento do dente com a dose de Vitamina C ingerida',
+y = 'Comprimento dente',
+x = 'Tipo de suplemento')
+```
+
+Exercício 4
+
+De acordo com o gráfico realizado foi possivel visualizar que através dos testes feitos pode se observar que em média, o uso do suco de laranja para o crescimento dos dentes é mais eficaz do que a vitamina C (ácido ascórbico) em si
+
+
+```{r}
+ggplot(data = myData2) +
+geom_boxplot(mapping = aes(x = supp, y = len), color = 'black', fill = 'blue')+
+labs(y = 'Comprimento do dente', x='Tipo de suplemento',
+title = 'Crescimento do dente de acordo com cada suplemento')
+```
+
+

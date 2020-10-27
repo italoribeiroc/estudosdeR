@@ -1,0 +1,177 @@
+---
+title: "homework3"
+author: "Italo Carvalho Vianelli Ribeiro"
+date: "13/06/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+RA: 769687
+
+
+Exercício 1
+
+Esse comando ele cria uma base para que podemos criar nossos gráficos
+
+```{r}
+library(ggplot2)
+ggplot(data=mpg)
+```
+
+
+Exercício 2
+
+Este conjunto de dados contém um subconjunto dos dados de economia de combustível e suas 11 variáveis:
+
+manufacturer - nome do fabricante; \n
+model - nome do modelo; \n
+displ- cilindrada do motor, em litros; \n
+year - ano de fabricação; \n
+cyl - numero de cilindros; \n
+trans - tipo de transmissão; \n
+drv - o tipo de trem de tração, em que f = tração dianteira, r = tração traseira, 4 = 4x4; \n
+cty - milhas da cidade por galão; \n
+hwy - milhas rodoviárias por galão; \n
+fl - tipo de gasolina; \n
+class - "tipo" do carro; \n
+
+```{r}
+?mpg
+head(mpg)
+tail(mpg)
+summary(mpg)
+```
+
+Exercício 3
+
+Com esse gráfico pode se observar que quantos mais cilindros menor é o número de milhas andadas por galão 
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = hwy, y = cyl, color = class))
+```
+
+
+Exercício 4
+
+Foi possível observar nesse gráfico que nas milhas da cidade os resultados são semelhantes ao de rodovia, provando que quando mais cilindros, menos milhas são andadas por galão 
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = cty, y = cyl, color = class))
+```
+
+
+Exercicio 5
+
+```{r}
+library(gridExtra)
+p1 <- ggplot(data=mpg, aes(x=hwy)) + geom_histogram(fill='blue',color='black')+
+labs(x = 'milhas rodoviárias por galão', title = 'Histograma milhas rodoviárias por galão')
+p2 <- ggplot(data=mpg, aes(x=hwy)) + geom_boxplot(fill='blue') +
+labs(x = 'milhas rodoviárias por galão', title = 'Box plot milhas rodoviárias por galão')
+p3 <- ggplot(data=mpg, aes(x=cty)) + geom_histogram(fill="pink",color='black')+
+labs(x = 'milhas da cidade por galão', title = 'Histograma milhas da cidade por galão')
+p4 <- ggplot(data=mpg, aes(x=cty)) + geom_boxplot(fill='pink')+
+labs(x = 'milhas da cidade por galão', title = 'Box plot milhas da cidade por galão')
+grid.arrange(p1, p2, p3, p4, ncol=2)
+```
+
+
+Exercício 6
+
+
+a)
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = class))+ facet_wrap( ∼ class, nrow=2)
+```
+
+
+b)
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color=drv)) + 
+  facet_grid(drv ~ cyl)
+```
+
+c)
+
+Ele cria os subplots apenas nos tamanhos do cilindro, com as cores de cada subplot de acordo com sua intensidade
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color=cyl)) + 
+  facet_grid(. ~ cyl)
+```
+
+
+Exercício 7
+```{r}
+library(readxl)
+homework3 = read_excel('homework3.xlsx')
+head(homework3)
+```
+
+
+a)
+```{r}
+ggplot(data = homework3) + 
+  geom_point(mapping = aes(x = as.numeric(CPI), y = as.numeric(HDI) ,color = 'red'))  +
+scale_x_continuous(breaks = seq(0,10, 1), limits = c(1, 10)) +
+scale_y_continuous(breaks = seq(0, 1, 0.1), limits = c(0.2, 1))
+```
+
+b)
+
+```{r}
+ggplot(data = homework3) + 
+  geom_point(mapping = aes(x = as.numeric(CPI), y = as.numeric(HDI) ,color = Region))  +
+scale_x_continuous(breaks = seq(0,10, 1), limits = c(1, 10)) +
+scale_y_continuous(breaks = seq(0, 1, 0.1), limits = c(0.2, 1))
+```
+
+
+c) 
+```{r}
+ggplot(data = homework3) + 
+  geom_point(mapping = aes(x = as.numeric(CPI), y = as.numeric(HDI) ,color = Region, size=3)) +
+scale_x_continuous(breaks = seq(0,10, 1), limits = c(1, 10)) +
+scale_y_continuous(breaks = seq(0, 1, 0.1), limits = c(0.2, 1))
+```
+
+
+d)
+```{r}
+ggplot(homework3) +
+geom_point(mapping = aes(x = as.numeric(CPI), y = as.numeric(HDI), size = HDI, color = Region)) +
+scale_x_continuous(breaks = seq(0,10, 1), limits = c(1, 10)) +
+scale_y_continuous(breaks = seq(0, 1, 0.1), limits = c(0.2, 1))
+```
+
+e)
+
+```{r}
+ggplot(data = homework3) + 
+  geom_point(mapping = aes(x = as.numeric(CPI), y = as.numeric(HDI) ,color = Region))  +
+scale_x_continuous(breaks = seq(0,10, 1), limits = c(1, 10)) +
+scale_y_continuous(breaks = seq(0, 1, 0.1), limits = c(0.2, 1)) + 
+labs(x = 'percepção da corrupção (CPI)', y = ' desenvolvimento humano (HDI)', title = 'diagrama de dispersão entre as variáveis CPI x HDI')
+```
+
+f)
+
+```{r}
+ggplot(data = homework3) + 
+geom_point(mapping = aes(x = as.numeric(CPI), y = as.numeric(HDI) ,color = Region))  +
+scale_x_continuous(breaks = seq(0,10, 1), limits = c(1, 10)) +
+scale_y_continuous(breaks = seq(0, 1, 0.1), limits = c(0.2, 1)) + 
+labs(x = 'percepção da corrupção (CPI)', y = ' desenvolvimento humano (HDI)', title = 'corrupção e desenvolvimento humano')+
+geom_smooth(mapping=aes(x = as.numeric(CPI), y = as.numeric(HDI), linetype="r2"), method = "lm", formula = y~log(x), se = FALSE, color = "red")
+```
+
